@@ -1,4 +1,5 @@
 # import libraries
+from datetime import datetime
 import os
 import cv2
 import imutils
@@ -7,6 +8,37 @@ import pickle
 import numpy as np
 from imutils.video import FPS
 from imutils.video import VideoStream
+import pyrebase
+from typing import Mapping
+
+#Initialize Firebase
+firebaseConfig = {
+    'apiKey': "AIzaSyD5JNwgNouvihlohxiGa8Bpg67pkmvkFK8",
+    'authDomain': "mydbpbl5.firebaseapp.com",
+    'databaseURL': "https://mydbpbl5-default-rtdb.firebaseio.com",
+    'projectId': "mydbpbl5",
+    'storageBucket': "mydbpbl5.appspot.com",
+    'messagingSenderId': "779874823764",
+    'appId': "1:779874823764:web:73a3033d24ed17902ac7c1",
+    'measurementId': "G-E7XC29K07T"   
+    }
+
+firebase=pyrebase.initialize_app(firebaseConfig)
+
+db=firebase.database()
+
+#Push Data
+# data={"age":20, "address":["new york", "los angeles"]}
+# print(db.push(data)) #unique key is generated
+
+#Create paths using child
+#data={"name":"Jane", "age":20}
+#db.child("Branch").child("Employees").push(data)
+
+#Create your own key
+# data={"age":20, "address":["new york", "los angeles"]}
+# db.child("John").set(data)
+
 
 # load serialized face detector
 print("Loading Face Detector...")
@@ -24,16 +56,20 @@ le = pickle.loads(open("output/le.pickle", "rb").read())
 
 # initialize the video stream, then allow the camera sensor to warm up
 print("Starting Video Stream...")
-vs = VideoStream(src=0).start()
+# vs = VideoStream(src=0).start()
+vs = cv2.VideoCapture(0)
 time.sleep(2.0)
 
 # start the FPS throughput estimator
 fps = FPS().start()
-
+nametemp = []
+#Create your own key + paths with child
+# data={"name":nametemp, "age":20, "address":["new york", "los angeles"]}
+# db.child("Branch").child("Employee").child("male employees").child("John's info").set(data)
 # loop over frames from the video file stream
 while True:
 	# grab the frame from the threaded video stream
-	frame = vs.read()
+	ret, frame = vs.read()
 
 	# resize the frame to have a width of 600 pixels (while maintaining the aspect ratio), and then grab the image dimensions
 	frame = imutils.resize(frame, width=600)
@@ -86,6 +122,7 @@ while True:
 				(0, 0, 255), 2)
 			cv2.putText(frame, text, (startX, y),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+			
 
 	# update the FPS counter
 	fps.update()
@@ -97,12 +134,19 @@ while True:
 	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
 		break
-
+	#Create your own key + paths with child
+	# data={"name":name, "age":20, "address":["new york", "los angeles"]}
+	# db.child("Branch").child("Employee").child("male employees").child("John's info").set(data)
+	#Create your own key
+	dt_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+	data={"age":20, "time":dt_str}
+	db.child(name).set(data)
 # stop the timer and display FPS information
 fps.stop()
 print("Elasped time: {:.2f}".format(fps.elapsed()))
 print("Approx. FPS: {:.2f}".format(fps.fps()))
 
 # cleanup
+vs.release()
 cv2.destroyAllWindows()
-vs.stop()
+# vs.stop()
