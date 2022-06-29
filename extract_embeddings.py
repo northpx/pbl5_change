@@ -31,7 +31,8 @@ total = 0
 # loop over the image paths
 for (i, imagePath) in enumerate(imagePaths):
 	# extract the person name from the image path
-	if (i%50 == 0):
+	if (i%55 == 0):
+		print(i)
 		print("Processing image {}/{}".format(i, len(imagePaths)))
 	name = imagePath.split(os.path.sep)[-2]
 

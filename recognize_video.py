@@ -1,5 +1,6 @@
 # import libraries
-from datetime import datetime
+from calendar import weekday
+import datetime
 import os
 import cv2
 import imutils
@@ -10,6 +11,7 @@ from imutils.video import FPS
 from imutils.video import VideoStream
 import pyrebase
 from typing import Mapping
+from tkinter import *
 
 #Initialize Firebase
 firebaseConfig = {
@@ -26,18 +28,6 @@ firebaseConfig = {
 firebase=pyrebase.initialize_app(firebaseConfig)
 
 db=firebase.database()
-
-#Push Data
-# data={"age":20, "address":["new york", "los angeles"]}
-# print(db.push(data)) #unique key is generated
-
-#Create paths using child
-#data={"name":"Jane", "age":20}
-#db.child("Branch").child("Employees").push(data)
-
-#Create your own key
-# data={"age":20, "address":["new york", "los angeles"]}
-# db.child("John").set(data)
 
 
 # load serialized face detector
@@ -63,10 +53,18 @@ time.sleep(2.0)
 # start the FPS throughput estimator
 fps = FPS().start()
 nametemp = []
+name1 = ""
+name2 = ""
+
+
 #Create your own key + paths with child
 # data={"name":nametemp, "age":20, "address":["new york", "los angeles"]}
 # db.child("Branch").child("Employee").child("male employees").child("John's info").set(data)
 # loop over frames from the video file stream
+weekDays = ("Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ Nhật")##
+thisXMas    = datetime.date(2017,12,25)#
+thisXMasDay = thisXMas.weekday()#
+thisXMasDayAsString = weekDays[thisXMasDay]#
 while True:
 	# grab the frame from the threaded video stream
 	ret, frame = vs.read()
@@ -123,24 +121,76 @@ while True:
 			cv2.putText(frame, text, (startX, y),
 				cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
 			
+			# window = Tk()
+			# window.title("Thong tin sinh vien")
+			# lb1 = Label(window, text=name, font=("arial bold", 50))
+			# window.geometry("300x300")
+			
+			dt_string = datetime.datetime.now()
+			db = firebase.database()
+
+			clsSec = []
+			clsSec = db.child("ClassSection").get().val()
+			timeStart = 0
+			timeEnd = 0
+			for section in	clsSec:
+				# if(db.child("/ClassSection/"+str(section)+"/room").get().val()== "P.202"):
+				# 	timeStart = int(db.child("/ClassSection/"+str(section)+"/lessonstart").get().val())+6
+				# 	timeEnd = int(db.child("/ClassSection/"+str(section)+"/lessonend").get().val())+6
+				
+				Weekday = db.child("ClassSection/"+str(section)+"/dayofweek").get().val()
+				idRoom = db.child("ClassSection/"+str(section)+"/room").get().val()
+				if(idRoom == "C205"):
+					# dt_string = datetime.datetime.now()
+					# dt3 = dt_string + datetime.timedelta(hours = 0)
+					# print(dt3)
+					# dt_now = dt_string.strftime("%Y/%m/%d, %H:%M:%S")
+					week = 0
+					dt_now = datetime.datetime(2022, 6, 28)
+					
+					dtOut = dt_now + datetime.timedelta(hours = 3)
+					
+					weekdaynow = weekDays[dt_now.date().weekday()]
+					if(weekdaynow == Weekday):
+						
+						dt_start = dt_now +datetime.timedelta(days = 7 * week) + datetime.timedelta(hours = 7) + datetime.timedelta(minutes =00)
+						dt_end = dt_now+datetime.timedelta(days = 7 * week) + datetime.timedelta(hours = 10) + datetime.timedelta(minutes =00)
+						print(str(dt_end)+"ss")
+						if(dt_now < dt_start+ datetime.timedelta(hours = 24)):
+							if(dt_now > dt_start + datetime.timedelta(hours = -24)):
+								if (name1 != name):
+									name1 = name
+									data = {"time": dt_string.strftime("%Y/%m/%d, %H:%M:%S")}
+									db.child("DetailSection/C205/"+str(section)+"/TimeIn/" +str(name1)+"/").update(data)
+									
+						if(dtOut < dt_end + datetime.timedelta(hours = 24)):
+							if(dtOut > dt_end + datetime.timedelta(hours=-24)):
+								if (name2 != name):
+									name2 = name
+									timeOut = dt_string + datetime.timedelta(hours = 3)
+									data = {"time": timeOut.strftime("%Y/%m/%d, %H:%M:%S")}
+									db.child("DetailSection/C205/"+str(section)+"/TimeOut/" +str(name1)+"/").update(data)
+					
 
 	# update the FPS counter
 	fps.update()
 
 	# show the output frame
 	cv2.imshow("Frame", frame)
+	# window.mainloop()
 	key = cv2.waitKey(1) & 0xFF
 
 	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
+		# window.destroy()
 		break
 	#Create your own key + paths with child
 	# data={"name":name, "age":20, "address":["new york", "los angeles"]}
 	# db.child("Branch").child("Employee").child("male employees").child("John's info").set(data)
 	#Create your own key
-	dt_str = datetime.now().strftime("%d/%m/%Y %H:%M")
-	data={"age":20, "time":dt_str}
-	db.child(name).set(data)
+	# dt_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+	# data={"age":20, "time":dt_str}
+	# db.child(name).set(data)
 # stop the timer and display FPS information
 fps.stop()
 print("Elasped time: {:.2f}".format(fps.elapsed()))
